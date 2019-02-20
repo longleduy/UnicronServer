@@ -1,0 +1,6 @@
+//Todo: Không push nhưng phần này lên github
+#modules
+/node_modules
+/src/logs
+.vscode
+.env

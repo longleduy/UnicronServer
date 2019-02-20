@@ -1,0 +1,60 @@
+{
+  "name": "UnicronServer",
+  "version": "1.0.0",
+  "description": "UnicronServer",
+  "main": "server.js",
+  "scripts": {
+    "clean": "rimraf dist",
+    "start": "nodemon ./src/server.js --exec babel-node --host 192.168.10.53"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/longleduy/UnicronServer.git"
+  },
+  "keywords": [
+    "UnicronServer"
+  ],
+  "author": "LongLD",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/longleduy/UnicronServer/issues"
+  },
+  "homepage": "https://github.com/longleduy/UnicronServer#readme",
+  "dependencies": {
+    "@babel/core": "^7.1.2",
+    "@babel/node": "^7.0.0",
+    "@babel/polyfill": "^7.0.0",
+    "@babel/preset-env": "^7.1.0",
+    "@babel/register": "^7.0.0",
+    "agenda": "^2.0.2",
+    "apollo-errors": "^1.9.0",
+    "apollo-server-express": "^2.2.1",
+    "apollo-utilities": "^1.0.27",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "bcrypt": "^3.0.2",
+    "bluebird": "^3.5.3",
+    "body-parser": "^1.18.3",
+    "chai": "^4.2.0",
+    "chai-http": "^4.2.0",
+    "chalk": "^2.4.1",
+    "cloudinary": "^1.13.1",
+    "connect-redis": "^3.4.0",
+    "cors": "^2.8.5",
+    "dotenv": "^6.1.0",
+    "express": "^4.16.4",
+    "express-graphql": "^0.7.1",
+    "express-session": "^1.15.6",
+    "file-loader": "^2.0.0",
+    "graphql": "^14.0.2",
+    "graphql-subscriptions": "^1.0.0",
+    "graphql-tools": "^4.0.3",
+    "jsonwebtoken": "^8.3.0",
+    "mime": "^2.3.1",
+    "mocha": "^5.2.0",
+    "mongoose": "^5.3.11",
+    "nodemailer": "^4.6.8",
+    "path": "^0.12.7",
+    "redis": "^2.8.0",
+    "subscriptions-transport-ws": "^0.9.15"
+  }
+}
