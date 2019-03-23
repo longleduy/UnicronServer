@@ -64,25 +64,41 @@ export const verifyEmail = async (secretKey) => {
         status: "Active"
     }
 }
-export const signIn = async (formData) => {
+export const signIn = async (formData,clientIP) => {
     const { email, passWord } = formData;
     const result = await userModel.findOne({ email });
     if (result) {
         if (!result.active) {
+           let field = 'email';
+           let blockTime;
+           let badRequestsCount = await setBadRequestClientIP(clientIP);
+           if(badRequestsCount === 'SIGN_IN_BLOCK'){
+             field = 'SIGN_IN_BLOCK';
+             blockTime = 300
+           }
             throw new errorHandler.dataFormInvalid({
                 message: ERROR_EMAIL_NOT_VERIFY,
                 data: {
-                    field: 'email'
+                    field,
+                    blockTime
                 }
             })
         }
         else {
             const verifyPasswordStatus = await passWordUtil.comparePassWordAsync(passWord, result.passWord);
             if (!verifyPasswordStatus) {
+                let field = 'passWord';
+                let blockTime;
+                let badRequestsCount = await setBadRequestClientIP(clientIP);
+                if(badRequestsCount === 'SIGN_IN_BLOCK'){
+                    field = 'SIGN_IN_BLOCK'
+                    blockTime = 300;
+                }
                 throw new errorHandler.dataFormInvalid({
                     message: WRONG_PASSWORD,
                     data: {
-                        field: 'passWord'
+                        field,
+                        blockTime
                     }
                 })
             }
@@ -106,18 +122,27 @@ export const signIn = async (formData) => {
                     facebookAdress: result.facebookAdress,
                     instagramAdress: result.instagramAdress,
                 }
-                const jwt = commonUtils.genJWT(payload, process.env.SECRET_KEY, '10h');
-                result["jwt"] = jwt
+                const jwt = commonUtils.genJWT(payload, process.env.SECRET_KEY, '5s');
+                result["jwt"] = jwt;
+                asyncClient.delAsync(`bad_request_client_ip_list:${clientIP}`);
                 return result;
             }
         }
 
     }
     else {
+            let field = 'email';
+            let blockTime;
+                let badRequestsCount = await setBadRequestClientIP(clientIP);
+                if(badRequestsCount === 'SIGN_IN_BLOCK'){
+                    field = 'SIGN_IN_BLOCK'
+                    blockTime =300
+                }
         throw new errorHandler.dataFormInvalid({
             message: ACCOUNT_NOT_AVAILABLE,
             data: {
-                field: 'email'
+                field,
+                blockTime
             }
         })
     }
@@ -156,6 +181,27 @@ export const getNewNotification = async (args,req,res) => {
         newestNotificationInfo: newestNotification[0]
     }
 }
+export const getSignInBlockTime = async (clientIP) => {
+    let count = await asyncClient.ttlAsync(`bad_request_client_ip_list:${clientIP}`);
+    let status = await asyncClient.getAsync(`bad_request_client_ip_list:${clientIP}`);
+    return {
+        count,
+        status
+    };
+}
 export const getMailUserID = (userID) => {
     return `email_buffer:${userID}`;
+}
+export const setBadRequestClientIP = async (clientIP) => {
+  let badRequestsCount = await asyncClient.getAsync(`bad_request_client_ip_list:${clientIP}`);
+  let expireTime;
+  if(badRequestsCount >3){
+      asyncClient.setexAsync(`bad_request_client_ip_list:${clientIP}`,300,'SIGN_IN_BLOCK');
+      badRequestsCount = 'SIGN_IN_BLOCK'
+  }
+  else{
+    await asyncClient.incrAsync(`bad_request_client_ip_list:${clientIP}`);
+    asyncClient.expireAsync(`bad_request_client_ip_list:${clientIP}`,86400);
+  }
+  return badRequestsCount;
 }
