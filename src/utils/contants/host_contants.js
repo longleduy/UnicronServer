@@ -1,10 +1,10 @@
-const HOST = 'https://192.168.10.53'
-const WSS = 'wss://192.168.10.53'
+const HOST = 'https://192.168.10.122'
+const WSS = 'wss://192.168.10.122'
 const CLIENT_PORT = '8086'
 const SERVER_PORT = '4000'
 const PRODUCTION_PORT = '443'
 const GRAPHQL_ENDPOINT = 'graphql';
-const HOST_NAME_PRODUCTION = 'unicron.com';
+const HOST_NAME_PRODUCTION = 'unicron.cf';
 const HOST_NAME_DEV = 'localhost';
 const MONGODB_PATH = 'mongodb://localhost/TripleD'
 module.exports.MONGODB_PATH = MONGODB_PATH

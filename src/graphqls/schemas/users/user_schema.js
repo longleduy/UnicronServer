@@ -5,6 +5,7 @@ import {update} from '../../../controllers/test'
 import {insertEmailActiveAccBuffer} from '../../../utils/job_utils/email_buffer_util'
 import { authorizationMiddleWare } from '../../../middlewares/authorization_middleware'
 import {convertPostTime} from '../../../utils/common'
+import {getClientIp} from '../../../utils/common'
 export const typeDefs = gql`
 interface  UserAccountInterface{
         firstName: String
@@ -96,10 +97,15 @@ interface  UserAccountInterface{
     type jwtRespone{
         jwt: String!
     }
+    type blockTime{
+        count: Int
+        status: String
+    }
     extend type Query{
         checkEmail(email: String!): checkEmail
         verifyEmail(secretKey: String!): verifyEmail
         getNotificationInfo:NewNotificationInfo
+        getSignInBlockTime: blockTime
         test:boolean
     }
     extend type Mutation {
@@ -120,9 +126,10 @@ export const resolvers = {
         getNotificationInfo: (obj, args, { req,res }) => {
             return authorizationMiddleWare(req,res, userAccountController.getNewNotification);
         },
-        test: (obj, args, context) => {
-            //insertEmailActiveAccBuffer();
-            update();
+        getSignInBlockTime: async (obj, args, { req,res }) => {
+            let clientIP = getClientIp(req).split('ffff:')[1];
+            let data = await userAccountController.getSignInBlockTime(clientIP);
+            return data;
         }
      },
     Mutation: {
@@ -130,7 +137,8 @@ export const resolvers = {
             return userAccountController.addNewUserAccount(args.formData);
         },
         signIn: async (obj, args, { req }) => {
-            const user = await userAccountController.signIn(args.formData);
+            let clientIP = getClientIp(req).split('ffff:')[1];
+            const user = await userAccountController.signIn(args.formData,clientIP);
             req.session.user = user;
             return {jwt:user.jwt};
         },

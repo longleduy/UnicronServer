@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken'
 import {AuthenticationError} from 'apollo-server-express'
 import {refreshJWT} from '../middlewares/refresh_jwt'
 export const authorizationMiddleWare = async (req,res,childFunction,args = null) => {
-    return childFunction(args,req,res);
+    //return childFunction(args,req,res);
     let token;
     try {
         let jwtReq = req.headers.authorization;
@@ -16,10 +16,10 @@ export const authorizationMiddleWare = async (req,res,childFunction,args = null)
         return childFunction(args,req,res);
     } catch (error){
         if(error.name === "TokenExpiredError"){
-           await refreshJWT(req,res,null)
+           await refreshJWT(req,res,null);
+           return childFunction(args,req,res);
         }
         else{
-            console.log(error);
             throw new AuthenticationError(error.message);
         }
     }

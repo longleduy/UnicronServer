@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "clean": "rimraf dist",
-    "start": "nodemon ./src/server.js --exec babel-node --host 192.168.10.53"
+    "start": "nodemon ./src/server.js --exec babel-node --host 192.168.10.122"
   },
   "repository": {
     "type": "git",

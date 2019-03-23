@@ -4,6 +4,7 @@ import chalk from 'chalk'
 import redisConnect from 'connect-redis'
 import session from 'express-session'
 import * as Promise from 'bluebird'
+require('dotenv').config();
 Bluebird.promisifyAll(redis.RedisClient.prototype)
 Bluebird.promisifyAll(redis.Multi.prototype)
 
@@ -19,7 +20,7 @@ client.on("error", function (err) {
     throw err;
 });
 export const redisServer = session({
-    secret: "longld",
+    secret: process.env.REDIS_SECRET_SESSION,
     resave: false,
     saveUninitialized: false,
     store: new RedisStore({ host: 'localhost', port: 6379, client: client }),
