@@ -3,6 +3,7 @@ import chalk from 'chalk'
 import "regenerator-runtime/runtime"
 import { ApolloServer,gra } from 'apollo-server-express'
 import * as https from 'https'
+import * as http from 'http'
 import * as fs from 'fs'
 //Todo: DB connect
 import { connectMongooseDB } from './utils/mongoose'
@@ -17,7 +18,7 @@ import * as ServerInfo from './utils/contants/host_contants'
 //Todo: ENV
 const connectApolloServer = async () => {
   const configurations = {
-    production: { ssl: false, port: `${ServerInfo.PRODUCTION_PORT}`, hostname: `${ServerInfo.HOST_NAME_PRODUCTION}` },
+    production: { ssl: false, port: `${process.env.PRODUCTION_PORT}`, hostname: `${process.env.HOST_NAME_DEV}` },
     development: { ssl: true, port: `${process.env.SERVER_PORT}`, hostname: `${process.env.HOST_NAME_DEV}` }
   }
   const environment = process.env.NODE_ENV || 'development'
