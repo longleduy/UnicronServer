@@ -127,7 +127,8 @@ export const resolvers = {
             return authorizationMiddleWare(req,res, userAccountController.getNewNotification);
         },
         getSignInBlockTime: async (obj, args, { req,res }) => {
-            let clientIP = getClientIp(req).split('ffff:')[1];
+            let clientIP = (req.headers['x-forwarded-for'] || '').split(',')[0] 
+            || req.connection.remoteAddress;
             let data = await userAccountController.getSignInBlockTime(clientIP);
             return data;
         }
@@ -137,7 +138,8 @@ export const resolvers = {
             return userAccountController.addNewUserAccount(args.formData);
         },
         signIn: async (obj, args, { req }) => {
-            let clientIP = getClientIp(req).split('ffff:')[1];
+            let clientIP = (req.headers['x-forwarded-for'] || '').split(',')[0] 
+            || req.connection.remoteAddress;
             const user = await userAccountController.signIn(args.formData,clientIP);
             req.session.user = user;
             return {jwt:user.jwt};
