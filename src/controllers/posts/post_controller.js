@@ -8,6 +8,7 @@ import { notificationModel } from '../../models/notification_model'
 import { client } from '../../utils/redis'
 import { uploadImage } from '../../utils/common'
 import { convertPostTime } from '../../utils/common'
+import delay from 'delay'
 const asyncClient = Promise.promisifyAll(client);
 
 export const createPost = async (postData, req = null, res = null) => {
@@ -117,6 +118,7 @@ export const getLimitedPosts = async ({ limitNumber, skipNumber }, req = null, r
             }
             data['postDate'] = postDate;
             data['postTime'] = postTime;
+
             return data;
         })
     }
@@ -169,6 +171,7 @@ export const getNewComment = async (req, id) => {
 }
 export const commentPost = async (commentData, req = null, res = null) => {
     const { postID, commentContent, commentImage, commentCount } = commentData;
+    
     const userID = req.session.user._id;
     const commenterInfo = {
         profileName: req.session.user.profileName,

@@ -1,7 +1,6 @@
 import { gql } from 'apollo-server-express'
 //Todo: Controllers
 import * as userAccountController from '../../../controllers/users/user_controller'
-import {update} from '../../../controllers/test'
 import {insertEmailActiveAccBuffer} from '../../../utils/job_utils/email_buffer_util'
 import { authorizationMiddleWare } from '../../../middlewares/authorization_middleware'
 import {convertPostTime} from '../../../utils/common'
@@ -60,6 +59,13 @@ interface  UserAccountInterface{
     type SignInInfo {
         jwt:String!
     }
+    type ListUser{
+        userID: String!
+        profileName:String!
+        avatar: String
+        status: String
+        point: Int
+    }
     input formData {
         firstName: String
         lastName: String
@@ -106,6 +112,7 @@ interface  UserAccountInterface{
         verifyEmail(secretKey: String!): verifyEmail
         getNotificationInfo:NewNotificationInfo
         getSignInBlockTime: blockTime
+        getListUser(limitNumber: Int!,skipNumber: Int!):[ListUser]
         test:boolean
     }
     extend type Mutation {
@@ -127,19 +134,21 @@ export const resolvers = {
             return authorizationMiddleWare(req,res, userAccountController.getNewNotification);
         },
         getSignInBlockTime: async (obj, args, { req,res }) => {
-            let clientIP = (req.headers['x-forwarded-for'] || '').split(',')[0] 
-            || req.connection.remoteAddress;
+            let clientIP = getClientIp(req);
             let data = await userAccountController.getSignInBlockTime(clientIP);
             return data;
-        }
+        },
+        getListUser: async (obj, args, { req, res }) => {
+            const data = await authorizationMiddleWare(req, res, userAccountController.getListUser, args);
+            return data;
+        },
      },
     Mutation: {
         addNewUserAccount: (obj, args, context) => {
             return userAccountController.addNewUserAccount(args.formData);
         },
         signIn: async (obj, args, { req }) => {
-            let clientIP = (req.headers['x-forwarded-for'] || '').split(',')[0] 
-            || req.connection.remoteAddress;
+            let clientIP = getClientIp(req);
             const user = await userAccountController.signIn(args.formData,clientIP);
             req.session.user = user;
             return {jwt:user.jwt};
@@ -172,6 +181,11 @@ export const resolvers = {
                 likeAndComments: obj.newNotifications.likeAndComments,
                 messages: obj.newNotifications.messages
             };
+        }
+    },
+    ListUser:{
+        userID : async (obj, args, { req, res }) => {
+            return obj._id
         }
     },
     UserAccountInterface: {

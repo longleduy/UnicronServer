@@ -14,6 +14,7 @@ import * as errorHandler from '../../utils/error_handler'
 import { uploadImage } from '../../utils/common'
 import { refreshJWT } from '../../middlewares/refresh_jwt'
 import {asyncClient} from '../../utils/redis'
+import delay from 'delay'
 //Todo: Contants
 import { ACCOUNT_NOT_AVAILABLE, WRONG_PASSWORD, ERROR_EMAIL_NOT_VERIFY } from '../../utils/contants/error_message_contants'
 
@@ -204,4 +205,8 @@ export const setBadRequestClientIP = async (clientIP) => {
     asyncClient.expireAsync(`bad_request_client_ip_list:${clientIP}`,86400);
   }
   return badRequestsCount;
+}
+export const getListUser =  async ({ limitNumber, skipNumber }, req = null, res = null) => {
+    let result = await userModel.find({},{ profileName: 1, avatar: 1,point:1 }).skip(skipNumber).limit(limitNumber).sort({point:-1});
+    return result;
 }

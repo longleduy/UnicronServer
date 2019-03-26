@@ -10,7 +10,7 @@ app.use(bodyParser.json({limit: '50mb'}));
 app.use(urlencodedParser);
 app.use(redisServer);
 app.use(cors({
-    origin: process.env.CLIENT_ORIGIN,
+    origin: process.env.NODE_ENV !='production'?process.env.CLIENT_ORIGIN_DEV:process.env.CLIENT_ORIGIN_PROD,
     allowedHeaders:['X-Requested-With','X-HTTP-Method-Override','Content-Type','Accept','Authorization'],
     credentials:true,
     methods:['POST','GET']
