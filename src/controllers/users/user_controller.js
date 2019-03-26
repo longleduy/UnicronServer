@@ -207,6 +207,6 @@ export const setBadRequestClientIP = async (clientIP) => {
   return badRequestsCount;
 }
 export const getListUser =  async ({ limitNumber, skipNumber }, req = null, res = null) => {
-    let result = await userModel.find({},{ profileName: 1, avatar: 1,point:1 }).skip(skipNumber).limit(limitNumber).sort({point:-1});
+    let result = await userModel.find({},{ profileName: 1, avatar: 1,point:1,status:1 }).skip(skipNumber).limit(limitNumber).sort({point:-1});
     return result;
 }

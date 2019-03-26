@@ -14,7 +14,8 @@ const userSchema = mongoose.Schema({
     avatar: { type: String },
     facebookAdress: { type: String, required: false },
     instagramAdress: { type: String, required: false },
-    createTime: {type: Date, default: Date.now}
+    createTime: {type: Date, default: Date.now},
+    status: { type: String }
 
 });
 userSchema.methods.validPassWord =  (passWord) => {
