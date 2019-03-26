@@ -37,7 +37,9 @@ export const resolvers = {
      },
      Notification: {
         fromUser: async (obj, args, { req, res }) => {
-            return obj.fromUser;
+            return obj.fromUser || {id: "?",
+                profileName: "Anonymous",
+                avatar: null};
         },
         actionTime: async (obj, args, { req, res })=> {
             return convertPostTime(obj.notifiTime)

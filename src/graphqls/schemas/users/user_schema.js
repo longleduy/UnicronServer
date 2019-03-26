@@ -1,10 +1,13 @@
 import { gql } from 'apollo-server-express'
+import {PubSub, withFilter} from 'graphql-subscriptions'
 //Todo: Controllers
 import * as userAccountController from '../../../controllers/users/user_controller'
-import {insertEmailActiveAccBuffer} from '../../../utils/job_utils/email_buffer_util'
+import { insertEmailActiveAccBuffer } from '../../../utils/job_utils/email_buffer_util'
 import { authorizationMiddleWare } from '../../../middlewares/authorization_middleware'
-import {convertPostTime} from '../../../utils/common'
-import {getClientIp} from '../../../utils/common'
+import { convertPostTime } from '../../../utils/common'
+import { getClientIp } from '../../../utils/common'
+const pubsub = new PubSub();
+const SET_USER_STATUS_SUB = 'SET_USER_STATUS_SUB'
 export const typeDefs = gql`
 interface  UserAccountInterface{
         firstName: String
@@ -113,27 +116,30 @@ interface  UserAccountInterface{
         getNotificationInfo:NewNotificationInfo
         getSignInBlockTime: blockTime
         getListUser(limitNumber: Int!,skipNumber: Int!):[ListUser]
-        test:boolean
     }
     extend type Mutation {
         addNewUserAccount(formData: formData):UserAccountInterface
         signIn(formData: formData): jwtRespone
         signOut:boolean
         updateUserInfo(updateUserDataInput: updateUserDataInput):updateUserDataType
+        setUserStatus(status:String!):ListUser
+    }
+    extend type Subscription{
+        setUserStatusSub: ListUser
     }
 `;
 export const resolvers = {
-     Query: {
-         checkEmail: (obj, args, context) => {
+    Query: {
+        checkEmail: (obj, args, context) => {
             return userAccountController.checkEmail(args.email);
-         },
+        },
         verifyEmail: (obj, args, context) => {
             return userAccountController.verifyEmail(args.secretKey);
         },
-        getNotificationInfo: (obj, args, { req,res }) => {
-            return authorizationMiddleWare(req,res, userAccountController.getNewNotification);
+        getNotificationInfo: (obj, args, { req, res }) => {
+            return authorizationMiddleWare(req, res, userAccountController.getNewNotification);
         },
-        getSignInBlockTime: async (obj, args, { req,res }) => {
+        getSignInBlockTime: async (obj, args, { req, res }) => {
             let clientIP = getClientIp(req);
             let data = await userAccountController.getSignInBlockTime(clientIP);
             return data;
@@ -142,31 +148,47 @@ export const resolvers = {
             const data = await authorizationMiddleWare(req, res, userAccountController.getListUser, args);
             return data;
         },
-     },
+    },
     Mutation: {
         addNewUserAccount: (obj, args, context) => {
             return userAccountController.addNewUserAccount(args.formData);
         },
         signIn: async (obj, args, { req }) => {
             let clientIP = getClientIp(req);
-            const user = await userAccountController.signIn(args.formData,clientIP);
+            const user = await userAccountController.signIn(args.formData, clientIP);
             req.session.user = user;
-            return {jwt:user.jwt};
+            return { jwt: user.jwt };
         },
-        signOut: async (obj, args, { req }) => {
+        signOut: async (obj, args, { req, res }) => {
+          let data =  await userAccountController.setUserStatus({ status: "OFF" }, req, res);
+          if(data){
+            pubsub.publish('SET_USER_STATUS_SUB',{setUserStatusSub:data})
+            }
             await req.session.destroy();
             return {
                 isSuccess: true
             };
         },
-        updateUserInfo: async (obj, args, { req,res }) => {
-            return authorizationMiddleWare(req,res, userAccountController.updateUserInfo,args.updateUserDataInput);
+        updateUserInfo: async (obj, args, { req, res }) => {
+            return authorizationMiddleWare(req, res, userAccountController.updateUserInfo, args.updateUserDataInput);
+        },
+        setUserStatus: async (obj, args, { req, res }) => {
+            let data = await userAccountController.setUserStatus({ status: args.status }, req, res);
+            if(data){
+                pubsub.publish('SET_USER_STATUS_SUB',{setUserStatusSub:data})
+            }
+            return data;
+        }
+    },
+    Subscription: {
+        setUserStatusSub: {
+            subscribe: () => pubsub.asyncIterator(SET_USER_STATUS_SUB)
         }
     },
     NewNotificationInfo: {
-        newestNotificationInfo : async (obj, args, { req, res }) => {
+        newestNotificationInfo: async (obj, args, { req, res }) => {
             const data = obj.newestNotificationInfo;
-            if(!data) return null;
+            if (!data) return null;
             return {
                 formUserName: data.fromUser.profileName,
                 formUserAvatar: data.fromUser.avatar,
@@ -176,15 +198,15 @@ export const resolvers = {
                 actionTime: convertPostTime(data.notifiTime)
             }
         },
-        newNotifications : async (obj, args, { req, res }) => {
+        newNotifications: async (obj, args, { req, res }) => {
             return {
                 likeAndComments: obj.newNotifications.likeAndComments,
                 messages: obj.newNotifications.messages
             };
         }
     },
-    ListUser:{
-        userID : async (obj, args, { req, res }) => {
+    ListUser: {
+        userID: async (obj, args, { req, res }) => {
             return obj._id
         }
     },

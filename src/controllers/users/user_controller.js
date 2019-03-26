@@ -210,3 +210,12 @@ export const getListUser =  async ({ limitNumber, skipNumber }, req = null, res 
     let result = await userModel.find({},{ profileName: 1, avatar: 1,point:1,status:1 }).skip(skipNumber).limit(limitNumber).sort({point:-1});
     return result;
 }
+export const setUserStatus =  async ({status}, req=null , res = null) => {
+    let result;
+    if(req.session.user){
+        const _id = mongo.ObjectId(req.session.user._id);
+        result = await userModel.findOneAndUpdate({ _id: _id }, { $set: {status} },{ new: true});
+    }
+    return result;
+}
+
