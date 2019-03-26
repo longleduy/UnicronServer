@@ -31,9 +31,14 @@ const connectApolloServer = async () => {
     },
     formatError: error => {
       const message = error.message;
-      if (error.extensions.exception.name !== "dataFormInvalid") {
-        // ErrorLogger(error.extensions.exception.stacktrace);
-        console.log(error);
+      if(process.env.NODE_ENV =='production'){
+          console.log(error);
+      }
+      else{
+        if (error.extensions.exception.name !== "dataFormInvalid") {
+          // ErrorLogger(error.extensions.exception.stacktrace);
+          console.log(error);
+        }
       }
       return {
         ...error,

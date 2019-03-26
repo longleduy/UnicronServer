@@ -8,6 +8,7 @@ const urlencodedParser = bodyParser.urlencoded({limit: '50mb',extended: false })
 require('dotenv').config();
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(urlencodedParser);
+app.set('trust proxy', 1);
 app.use(redisServer);
 app.use(cors({
     origin: process.env.NODE_ENV !='production'?process.env.CLIENT_ORIGIN_DEV:process.env.CLIENT_ORIGIN_PROD,
