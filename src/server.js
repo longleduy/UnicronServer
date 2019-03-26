@@ -18,8 +18,8 @@ import * as ServerInfo from './utils/contants/host_contants'
 //Todo: ENV
 const connectApolloServer = async () => {
   const configurations = {
-    production: { ssl: false, port: `${process.env.PORT}`, hostname: `${process.env.HOST_NAME_PROD}` },
-    development: { ssl: true, port: `${process.env.PORT}`, hostname: `${process.env.HOST_NAME_DEV}` }
+    production: { ssl: false, port: `${process.env.PRODUCTION_PORT}`, hostname: `${process.env.HOST_NAME_DEV}` },
+    development: { ssl: true, port: `${process.env.SERVER_PORT}`, hostname: `${process.env.HOST_NAME_DEV}` }
   }
   const environment = process.env.NODE_ENV || 'development'
   const config = configurations[environment]
@@ -31,14 +31,9 @@ const connectApolloServer = async () => {
     },
     formatError: error => {
       const message = error.message;
-      if(process.env.NODE_ENV =='production'){
-          console.log(error);
-      }
-      else{
-        if (error.extensions.exception.name !== "dataFormInvalid") {
-          // ErrorLogger(error.extensions.exception.stacktrace);
-          console.log(error);
-        }
+      if (error.extensions.exception.name !== "dataFormInvalid") {
+        // ErrorLogger(error.extensions.exception.stacktrace);
+        console.log(error);
       }
       return {
         ...error,
@@ -59,7 +54,7 @@ const connectApolloServer = async () => {
     sslServer = http.createServer(app)
   }
   server.installSubscriptionHandlers(sslServer)
-  sslServer.listen({ port: `${process.env.PORT}`});
+  sslServer.listen({ port: `${process.env.SERVER_PORT}`});
 }
   const run = async () => {
     try {
@@ -67,7 +62,7 @@ const connectApolloServer = async () => {
       const connectServer = connectApolloServer();
       await connectDB;
       await connectServer;
-      console.log(`🛡️  ${chalk.cyan('Apollo server')},${chalk.green('MongoDB')} connecting..., ${chalk.cyan('Port')} ${process.env.PORT}`)
+      console.log(`🛡️  ${chalk.cyan('Apollo server')},${chalk.green('MongoDB')} connecting..., ${chalk.cyan('Port')} ${process.env.SERVER_PORT}`)
     } catch (error) {
       console.log(error);
     }
