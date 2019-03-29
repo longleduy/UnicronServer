@@ -80,6 +80,12 @@ interface  UserAccountInterface{
         active: Boolean
         avatar: String
     }
+    input signInfoSocialData {
+        socialID: String!
+        profileName: String!
+        avatar: String
+        socialRole: String!
+    }
     input updateUserDataInput{
         gender: String
         dateOfBirth: String
@@ -123,6 +129,7 @@ interface  UserAccountInterface{
         signOut:boolean
         updateUserInfo(updateUserDataInput: updateUserDataInput):updateUserDataType
         setUserStatus(status:String!):ListUser
+        signInSocial(signInfoSocialData: signInfoSocialData): jwtRespone
     }
     extend type Subscription{
         setUserStatusSub: ListUser
@@ -156,6 +163,11 @@ export const resolvers = {
         signIn: async (obj, args, { req }) => {
             let clientIP = getClientIp(req);
             const user = await userAccountController.signIn(args.formData, clientIP);
+            req.session.user = user;
+            return { jwt: user.jwt };
+        },
+        signInSocial : async (obj, args, { req }) => {
+            const user = await userAccountController.signInSocial(args.signInfoSocialData);
             req.session.user = user;
             return { jwt: user.jwt };
         },

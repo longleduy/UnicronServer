@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
 const userSchema = mongoose.Schema({
-    firstName: { type: String, required: true },
-    lastName: { type: String, required: true },
-    email: { type: String, required: true,unique:true },
+    firstName: { type: String, required: false },
+    lastName: { type: String, required: false },
+    email: { type: String,unique:true },
     profileName: { type: String, required: false },
-    passWord: { type: String, required: true },
+    passWord: { type: String },
     gender: { type: String, required: false },
     dateOfBirth: { type: Date, required: false },
     level: { type: String, required: false },
@@ -15,7 +15,8 @@ const userSchema = mongoose.Schema({
     facebookAdress: { type: String, required: false },
     instagramAdress: { type: String, required: false },
     createTime: {type: Date, default: Date.now},
-    status: { type: String }
+    status: { type: String },
+    socialKey: { type: String }
 
 });
 userSchema.methods.validPassWord =  (passWord) => {

@@ -1,19 +1,19 @@
 import { mongo } from 'mongoose'
 //Todo: Model
 import { userModel } from '../../models/user_model'
-import {notificationModel} from '../../models/notification_model'
+import { notificationModel } from '../../models/notification_model'
 
 import fs from 'fs'
 import util from 'util'
 //Todo: Utils
 import * as passWordUtil from '../../utils/password_util'
-import {insertEmailActiveAccBuffer} from '../../utils/job_utils/email_buffer_util'
+import { insertEmailActiveAccBuffer } from '../../utils/job_utils/email_buffer_util'
 import { AuthenticationError } from 'apollo-server-express'
 import * as commonUtils from '../../utils/common'
 import * as errorHandler from '../../utils/error_handler'
 import { uploadImage } from '../../utils/common'
 import { refreshJWT } from '../../middlewares/refresh_jwt'
-import {asyncClient} from '../../utils/redis'
+import { asyncClient } from '../../utils/redis'
 import delay from 'delay'
 //Todo: Contants
 import { ACCOUNT_NOT_AVAILABLE, WRONG_PASSWORD, ERROR_EMAIL_NOT_VERIFY } from '../../utils/contants/error_message_contants'
@@ -65,18 +65,18 @@ export const verifyEmail = async (secretKey) => {
         status: "Active"
     }
 }
-export const signIn = async (formData,clientIP) => {
+export const signIn = async (formData, clientIP) => {
     const { email, passWord } = formData;
     const result = await userModel.findOne({ email });
     if (result) {
         if (!result.active) {
-           let field = 'email';
-           let blockTime;
-           let badRequestsCount = await setBadRequestClientIP(clientIP);
-           if(badRequestsCount === 'SIGN_IN_BLOCK'){
-             field = 'SIGN_IN_BLOCK';
-             blockTime = 300
-           }
+            let field = 'email';
+            let blockTime;
+            let badRequestsCount = await setBadRequestClientIP(clientIP);
+            if (badRequestsCount === 'SIGN_IN_BLOCK') {
+                field = 'SIGN_IN_BLOCK';
+                blockTime = 300
+            }
             throw new errorHandler.dataFormInvalid({
                 message: ERROR_EMAIL_NOT_VERIFY,
                 data: {
@@ -91,7 +91,7 @@ export const signIn = async (formData,clientIP) => {
                 let field = 'passWord';
                 let blockTime;
                 let badRequestsCount = await setBadRequestClientIP(clientIP);
-                if(badRequestsCount === 'SIGN_IN_BLOCK'){
+                if (badRequestsCount === 'SIGN_IN_BLOCK') {
                     field = 'SIGN_IN_BLOCK'
                     blockTime = 300;
                 }
@@ -112,7 +112,7 @@ export const signIn = async (formData,clientIP) => {
                     dateOfBirthString = newDate.toDateString();;
                 }
                 const payload = {
-                    userID:result._id,
+                    userID: result._id,
                     avatar: result.avatar,
                     email: result.email,
                     profileName: result.profileName,
@@ -132,13 +132,13 @@ export const signIn = async (formData,clientIP) => {
 
     }
     else {
-            let field = 'email';
-            let blockTime;
-                let badRequestsCount = await setBadRequestClientIP(clientIP);
-                if(badRequestsCount === 'SIGN_IN_BLOCK'){
-                    field = 'SIGN_IN_BLOCK'
-                    blockTime =300
-                }
+        let field = 'email';
+        let blockTime;
+        let badRequestsCount = await setBadRequestClientIP(clientIP);
+        if (badRequestsCount === 'SIGN_IN_BLOCK') {
+            field = 'SIGN_IN_BLOCK'
+            blockTime = 300
+        }
         throw new errorHandler.dataFormInvalid({
             message: ACCOUNT_NOT_AVAILABLE,
             data: {
@@ -147,6 +147,54 @@ export const signIn = async (formData,clientIP) => {
             }
         })
     }
+}
+export const signInSocial = async (formData) => {
+    const { socialID, profileName, avatar, socialRole } = formData;
+    const socialKey = `${socialRole}-${socialID}`;
+    let userData;
+    userData = await userModel.findOne({socialKey});
+    if(!userData){
+        const newUserAccount = new userModel({
+            firstName: null,
+            lastName: null,
+            email: socialID,
+            profileName,
+            passWord: null,
+            gender: null,
+            dateOfBirth: null,
+            level: "Member",
+            point: 0,
+            rank: 1,
+            facebookAdress: null,
+            instagramAdress: null,
+            active: true,
+            avatar,
+            socialKey
+        });
+        userData = await newUserAccount.save();
+    }
+    const date = new Date(userData.createTime);
+    const joinAt = date.toDateString();
+    let dateOfBirthString;
+    if (userData.dateOfBirth != null) {
+        const newDate = new Date(userData.dateOfBirth);
+        dateOfBirthString = newDate.toDateString();;
+    }
+    const payload = {
+        userID: userData._id,
+        avatar: userData.avatar,
+        email: userData.email,
+        profileName: userData.profileName,
+        level: userData.level,
+        gender: userData.gender,
+        dateOfBirth: dateOfBirthString ? dateOfBirthString : userData.dateOfBirth,
+        joinAt: joinAt,
+        facebookAdress: userData.facebookAdress,
+        instagramAdress: userData.instagramAdress,
+    }
+    const jwt = commonUtils.genJWT(payload, process.env.SECRET_KEY, '5s');
+    userData["jwt"] = jwt;
+    return userData;
 }
 export const updateUserInfo = async (updateData, req, res) => {
     const _id = mongo.ObjectId(req.session.user._id);
@@ -166,16 +214,16 @@ export const updateUserInfo = async (updateData, req, res) => {
     await refreshJWT(req, res, result);
     return result;
 }
-export const getNewNotification = async (args,req,res) => {
+export const getNewNotification = async (args, req, res) => {
     const userID = req.session.user._id;
-    const countLikeAndPostAsyncFunc = notificationModel.countDocuments({userID,action:{$in:['LIKE','COMMENT']},isNewNotif:true});
-    const countMessageAsyncFunc = notificationModel.countDocuments({userID,action:{$in:['CHAT']},isNewNotif:true});
-    const getNewestNotificationAsyncFunc = notificationModel.find({userID,isNewNotif:true}).populate('fromUser', 'profileName avatar').sort({ notifiTime:-1,_id: -1 });
-    const likeAndComments = await  countLikeAndPostAsyncFunc;
-    const messages = await  countMessageAsyncFunc;
+    const countLikeAndPostAsyncFunc = notificationModel.countDocuments({ userID, action: { $in: ['LIKE', 'COMMENT'] }, isNewNotif: true });
+    const countMessageAsyncFunc = notificationModel.countDocuments({ userID, action: { $in: ['CHAT'] }, isNewNotif: true });
+    const getNewestNotificationAsyncFunc = notificationModel.find({ userID, isNewNotif: true }).populate('fromUser', 'profileName avatar').sort({ notifiTime: -1, _id: -1 });
+    const likeAndComments = await countLikeAndPostAsyncFunc;
+    const messages = await countMessageAsyncFunc;
     const newestNotification = await getNewestNotificationAsyncFunc;
     return {
-        newNotifications:{
+        newNotifications: {
             likeAndComments,
             messages
         },
@@ -194,27 +242,27 @@ export const getMailUserID = (userID) => {
     return `email_buffer:${userID}`;
 }
 export const setBadRequestClientIP = async (clientIP) => {
-  let badRequestsCount = await asyncClient.getAsync(`bad_request_client_ip_list:${clientIP}`);
-  let expireTime;
-  if(badRequestsCount >3){
-      asyncClient.setexAsync(`bad_request_client_ip_list:${clientIP}`,300,'SIGN_IN_BLOCK');
-      badRequestsCount = 'SIGN_IN_BLOCK'
-  }
-  else{
-    await asyncClient.incrAsync(`bad_request_client_ip_list:${clientIP}`);
-    asyncClient.expireAsync(`bad_request_client_ip_list:${clientIP}`,86400);
-  }
-  return badRequestsCount;
+    let badRequestsCount = await asyncClient.getAsync(`bad_request_client_ip_list:${clientIP}`);
+    let expireTime;
+    if (badRequestsCount > 3) {
+        asyncClient.setexAsync(`bad_request_client_ip_list:${clientIP}`, 300, 'SIGN_IN_BLOCK');
+        badRequestsCount = 'SIGN_IN_BLOCK'
+    }
+    else {
+        await asyncClient.incrAsync(`bad_request_client_ip_list:${clientIP}`);
+        asyncClient.expireAsync(`bad_request_client_ip_list:${clientIP}`, 86400);
+    }
+    return badRequestsCount;
 }
-export const getListUser =  async ({ limitNumber, skipNumber }, req = null, res = null) => {
-    let result = await userModel.find({},{ profileName: 1, avatar: 1,point:1,status:1 }).skip(skipNumber).limit(limitNumber).sort({point:-1});
+export const getListUser = async ({ limitNumber, skipNumber }, req = null, res = null) => {
+    let result = await userModel.find({}, { profileName: 1, avatar: 1, point: 1, status: 1 }).skip(skipNumber).limit(limitNumber).sort({ point: -1 });
     return result;
 }
-export const setUserStatus =  async ({status}, req=null , res = null) => {
+export const setUserStatus = async ({ status }, req = null, res = null) => {
     let result;
-    if(req.session.user){
+    if (req.session.user) {
         const _id = mongo.ObjectId(req.session.user._id);
-        result = await userModel.findOneAndUpdate({ _id: _id }, { $set: {status} },{ new: true});
+        result = await userModel.findOneAndUpdate({ _id: _id }, { $set: { status } }, { new: true });
     }
     return result;
 }

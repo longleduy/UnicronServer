@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "rimraf dist",
     "start": "ENV NODE_ENV=production nodemon ./src/server.js --exec babel-node",
-    "start_dev": "ENV NODE_ENV=development nodemon ./src/server.js --exec babel-node --host 192.168.10.125"
+    "start_dev": "ENV NODE_ENV=development nodemon ./src/server.js --exec babel-node --host 192.168.10.128"
   },
   "repository": {
     "type": "git",
